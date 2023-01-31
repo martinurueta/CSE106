@@ -35,8 +35,10 @@ def format_classes(courses): # this is to format the courses in a nice way
 
 
 input_file = "classesInput.txt" # input file name
+output_file = "classesOutput.txt" # output file name
 courses = parse_classes(input_file) # parse classes
 formatted_classes = format_classes(courses) # format classes
-for course in formatted_classes: # for each formatted course
-    print(course) # print formatted course
+with open(output_file, 'w') as f: # write to output file
+    for course in formatted_classes:
+        f.write(course)
 
