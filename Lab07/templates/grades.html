@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<link rel = "stylesheet" type = "text/css" href = "{{ url_for('static', filename='style.css') }}" />
+
+<form>
+  <label for="name">Name:</label>
+  <input type="text" id="name" name="name"><br>
+  <label for="grade">Grade:</label>
+  <input type="number" id="grade" name="grade"><br>
+</form>
+
+<br>
+
+<button type="button" onclick="getGrades()">Click here to get grades</button><br><br>
+<button type="button" onclick="getStudentGrade()">Click here to get a student's grade</button><br><br>
+<button type="button" onclick="addStudent()">Click here to add a student</button><br><br>
+<button type="button" onclick="editGrades()">Click here to edit a student's grade</button><br><br>
+<button type="button" onclick="deleteStudent()">Click here to delete a student</button><br><br>
+
+<div id="demo"></div>
+
+<script>
+function getGrades() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("GET", "http://127.0.0.1:5000/grades");
+  xhttp.onload = function() {
+    document.getElementById("demo").innerHTML = this.responseText;
+  };
+  xhttp.send();
+}
+
+function getStudentGrade() {
+  var name = document.getElementById("name").value;
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("GET", "http://127.0.0.1:5000/grades/" + name);
+  xhttp.onload = function() {
+    document.getElementById("demo").innerHTML = this.responseText;
+  };
+  xhttp.send();
+}
+
+function addStudent() {
+  var name = document.getElementById("name").value;
+  var grade = document.getElementById("grade").value;
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("POST", "http://127.0.0.1:5000/grades");
+  xhttp.setRequestHeader("Content-Type", "application/json");
+  xhttp.onload = function() {
+    document.getElementById("demo").innerHTML = this.responseText;
+  };
+  const body = {"name": name, "grade": grade};
+  xhttp.send(JSON.stringify(body));
+}
+
+function editGrades() {
+  var name = document.getElementById("name").value;
+  var grade = document.getElementById("grade").value;
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("PUT", "http://127.0.0.1:5000/grades/" + name);
+  xhttp.setRequestHeader("Content-Type", "application/json");
+  xhttp.onload = function() {
+    document.getElementById("demo").innerHTML = this.responseText;
+  };
+  const body = {"grade": grade};
+  xhttp.send(JSON.stringify(body));
+}
+
+function deleteStudent() {
+  var name = document.getElementById("name").value;
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("DELETE", "http://127.0.0.1:5000/grades/" + name);
+  xhttp.onload = function() {
+    document.getElementById("demo").innerHTML = this.responseText;
+  };
+  xhttp.send();
+}
+
+</script>
+
+</body>
+</html>
