@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <title>Admin Dashboard - JoMama University</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+
+    <h2>Manage Users</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Password</th>
+                <th>Role</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Loop through users and create a table row for each user -->
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.password }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    <!-- <button data-id="{{ user.id }}" data-username="{{ user.username }}" data-role="{{ user.role }}" id="edit-user-{{ user.id }}">Edit</button> -->
+                    <button data-id="{{ user.id }}" id="delete-user-{{ user.id }}">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button id="add-user-button">Add User</button>
+
+    <!-- Add User Modal -->
+  <div id="add-user-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+      <h2>Add User</h2>
+      <form id="add-user-form">
+        <label for="name">Name:</label>
+        <input type="text" name="name" required>
+        <br>
+        <label for="username">Username:</label>
+        <input type="text" name="username" required>
+        <br>
+        <label for="password">Password:</label>
+        <input type="password" name="password" required>
+        <br>
+        <label for="role">Role:</label>
+        <select name="role">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
+        <br>
+        <button type="submit">Add User</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+<div id="edit-user-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Edit User</h2>
+      <form id="edit-user-form">
+        <input type="hidden" name="user_id" id="edit-user-id">
+        <label for="edit-username">Username:</label>
+        <input type="text" name="username" id="edit-username" required>
+        <label for="edit-password">Password (leave blank to keep current password):</label>
+        <input type="password" name="password" id="edit-password">
+        <label for="edit-role">Role:</label>
+        <select name="role" id="edit-role" required>
+          <option value="admin">Admin</option>
+          <option value="teacher">Teacher</option>
+          <option value="student">Student</option>
+        </select>
+        <button type="submit">Update User</button>
+      </form>
+    </div>
+  </div>
+  
+
+    <h2>Manage Classes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Teacher</th>
+                <th>Capacity</th>
+                <th>Time</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Loop through classes and create a table row for each class -->
+            {% for class in classes %}
+            <tr>
+                <td>{{ class.id }}</td>
+                <td>{{ class.name }}</td>
+                <td>{{ class.teacher }}</td>
+                <td>{{ class.capacity }}</td>
+                <td>{{ class.time }}</td>
+                <td>
+                    <!-- <button>Edit</button> -->
+                    <button data-id="{{ class.id }}" id="delete-class-{{ class.id }}">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button id="add-class-button">Add Class</button>
+
+    <div id="add-class-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Add Class</h3>
+            <form id="add-class-form">
+                <label for="class-name">Name:</label>
+                <input type="text" id="class-name" name="name" required>
+                <br>
+                <label for="class-teacher">Teacher:</label>
+                <input type="text" id="class-teacher" name="teacher" required>
+                <br>
+                <label for="class-capacity">Capacity:</label>
+                <input type="number" id="class-capacity" name="capacity" required>
+                <br>
+                <label for="class-time">time:</label>
+                <input type="text" id="class-time" name="time" required>
+                <br>
+                <input type="submit" value="Add Class">
+            </form>
+        </div>
+    </div>
+
+
+    <h2>Manage Enrollments</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Class</th>
+                <th>Grade</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Loop through enrollments and create a table row for each enrollment -->
+            {% for enrollment in enrollments %}
+            <tr>
+                <td>{{ enrollment.id }}</td>
+                <td>{{ enrollment.student }}</td>
+                <td>{{ enrollment.class }}</td>
+                <td>{{ enrollment.grade }}</td>
+                <td>
+                    <button>Edit</button>
+                    <button>Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button>Add Enrollment</button>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

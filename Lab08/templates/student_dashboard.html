@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <title>Student Dashboard - JoMama University</title>
+</head>
+
+<body>
+    <h1>Student Dashboard</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+
+    <h2>My Classes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Teacher</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Loop through enrolled_classes and create a table row for each class -->
+            {% for class in enrolled_classes %}
+            <tr>
+                <td>{{ class.id }}</td>
+                <td>{{ class.name }}</td>
+                <td>{{ class.teacher }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>All Classes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Teacher</th>
+                <th>Capacity</th>
+                <th>Students Enrolled</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Loop through all_classes and create a table row for each class -->
+            {% for class in all_classes %}
+            <tr>
+                <td>{{ class.id }}</td>
+                <td>{{ class.name }}</td>
+                <td>{{ class.teacher }}</td>
+                <td>{{ class.capacity }}</td>
+                <td>{{ class.students_enrolled() }}</td>
+                <td>
+                    <!-- create an if statement that checks for enrolled < capacity and also if they are enrolled they can uneroll -->
+                    {% if class in enrolled_classes %} 
+                    <button onclick="unenroll('{{ class.id }}')">Unenroll</button>
+                        {% else %} 
+                        {% if class.students_enrolled() < class.capacity %} 
+                        <button onclick="enroll('{{ class.id }}')">Enroll</button>
+                        {% else %}
+                        <span>Class Full</span>
+                        {% endif %}
+                        {% endif %}
+
+
+                    <!-- {% if class.students_enrolled() < class.capacity %} 
+                        {% if class in enrolled_classes %} 
+                        <button onclick="unenroll('{{ class.id }}')">Unenroll</button>
+                            {% else %}
+                            <button onclick="enroll('{{ class.id }}')">Enroll</button>
+                            {% endif %}
+                            {% else %}
+                            <span>Class Full</span>
+                        {% endif %} -->
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>
