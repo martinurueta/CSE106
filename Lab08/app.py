@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_admin import Admin, AdminIndexView
+from flask_admin.contrib.sqla import ModelView
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -28,10 +30,83 @@ class Class(db.Model):
 
 class Enrollment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     class_id = db.Column(db.Integer, db.ForeignKey('class.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     grade = db.Column(db.String(80), nullable=True)
 
+
+class IndexView(AdminIndexView):
+    def is_accessible(self):
+        if 'user_id' in session and session['user_role'] == 'admin':
+            return True
+        else:
+            return False
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('index'))
+    
+
+class UserView(ModelView):
+    column_exclude_list = ['password']
+
+    def is_accessible(self):
+        if 'user_id' in session and session['user_role'] == 'admin':
+            return True
+        else:
+            return False
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('index'))
+    
+    def on_model_change(self, form, model, is_created):
+        model.password = generate_password_hash(model.password, method='sha256')
+
+    def on_form_prefill(self, form, id):
+        form.password.data = ''
+
+
+class ClassView(ModelView):
+    def is_accessible(self):
+        if 'user_id' in session and session['user_role'] == 'admin':
+            return True
+        else:
+            return False
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('index'))
+    
+
+class EnrollmentView(ModelView):
+    column_list = ['student_name', 'class_name', 'grade']
+    column_labels = dict(student_name='Student', class_name='Class')
+
+    def _student_name(view, context, model, name):
+        student = User.query.filter_by(id=model.student_id).first()
+        return student.name if student else ''
+
+    def _class_name(view, context, model, name):
+        class_obj = Class.query.filter_by(id=model.class_id).first()
+        return class_obj.name if class_obj else ''
+
+    column_formatters = {
+        'student_name': _student_name,
+        'class_name': _class_name
+    }
+
+    def is_accessible(self):
+        if 'user_id' in session and session['user_role'] == 'admin':
+            return True
+        else:
+            return False
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('index'))
+
+
+admin_app = Admin(app, name="Admin Page", index_view=IndexView(), template_mode="bootstrap3")
+admin_app.add_view(UserView(User, db.session))
+admin_app.add_view(ClassView(Class, db.session))
+admin_app.add_view(EnrollmentView(Enrollment, db.session))
 
 
 @app.route('/')
@@ -50,73 +125,13 @@ def login():
         session['user_role'] = user.role
 
         if user.role == 'admin':
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin.index'))
         elif user.role == 'teacher':
             return redirect(url_for('teacher_dashboard'))
         elif user.role == 'student':
             return redirect(url_for('student_dashboard'))
     else:
         return render_template('index.html', error='Invalid username or password')
-
-@app.route('/add_user', methods=['POST'])
-def add_user():
-    if 'user_id' not in session or session['user_role'] != 'admin':
-        return redirect(url_for('index'))
-
-    username = request.form.get('username')
-    password = request.form.get('password')
-    role = request.form.get('role')
-    name = request.form.get('name')
-
-    user = User(username=username, password=generate_password_hash(password), role=role, name=name)
-    db.session.add(user)
-    db.session.commit()
-
-    return '', 200
-
-@app.route('/delete_user', methods=['POST'])
-def delete_user():
-    if 'user_id' not in session or session['user_role'] != 'admin':
-        return redirect(url_for('index'))
-
-    user_id = request.form.get('user_id')
-    user = User.query.get(user_id)
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        return '', 200
-    else:
-        return 'User not found', 404
-
-@app.route('/add_class', methods=['POST'])
-def add_class():
-    # Add authentication and validation checks here
-
-    name = request.form.get('name')
-    teacher = request.form.get('teacher')
-    capacity = request.form.get('capacity')
-    time = request.form.get('time')
-
-    new_class = Class(name=name, teacher=teacher, capacity=capacity, totalStudent=0, time=time)
-    db.session.add(new_class)
-    db.session.commit()
-
-    return '', 200
-
-@app.route('/delete_class', methods=['POST'])
-def delete_class():
-    if 'user_id' not in session or session['user_role'] != 'admin':
-        return redirect(url_for('index'))
-
-    class_id = request.form.get('class_id')
-    class_to_delete = Class.query.get(class_id)
-    if class_to_delete:
-        db.session.delete(class_to_delete)
-        db.session.commit()
-        return '', 200
-    else:
-        return 'Class not found', 404
-
 
 
 @app.route('/logout')
@@ -125,15 +140,6 @@ def logout():
     session.pop('user_role', None)
     return redirect(url_for('index'))
 
-@app.route('/admin_dashboard')
-def admin_dashboard():
-    if 'user_id' not in session or session['user_role'] != 'admin':
-        return redirect(url_for('index'))
-    users = User.query.all()
-    classes = Class.query.all()
-    enrollments = Enrollment.query.all()
-
-    return render_template('admin_dashboard.html', users=users, classes=classes, enrollments=enrollments)
 
 @app.route('/teacher_dashboard')
 def teacher_dashboard():
@@ -197,6 +203,7 @@ def student_dashboard():
     # Get the classes the user is enrolled in
     enrolled_classes = Class.query.join(Enrollment, Class.id == Enrollment.class_id).filter(Enrollment.student_id == current_user.id).all()
 
+
     # Get all classes
     all_classes = Class.query.all()
 
@@ -212,6 +219,9 @@ def enroll():
 
     enrollment = Enrollment(student_id=user_id, class_id=class_id)  # Update student to student_id
     db.session.add(enrollment)
+
+    class_obj = Class.query.filter_by(id=class_id).first()
+    class_obj.totalStudent = class_obj.totalStudent + 1
     db.session.commit()
 
     return '', 200
@@ -229,6 +239,10 @@ def unenroll():
 
     if enrollment:
         db.session.delete(enrollment)
+
+        class_obj = Class.query.filter_by(id=class_id).first()
+        class_obj.totalStudent = class_obj.totalStudent - 1
+
         db.session.commit()
         return '', 200
     else:
