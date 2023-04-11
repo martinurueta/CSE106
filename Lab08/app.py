@@ -194,8 +194,9 @@ def update_student_grade():
 
 @app.route('/student_dashboard')
 def student_dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+
+    if 'user_id' not in session or session['user_role'] != 'student':
+        return redirect(url_for('index'))
 
     # Get the current user
     current_user = User.query.get(session['user_id'])
